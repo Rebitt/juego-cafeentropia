@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap">
+<title>Blaster Poético</title>
+<style>
+:root{--bg:#2b1055;--fg:#fff4e0;--mut:#ffc9a8;--acc:#ffd23f;--ok:#7dffb0;--card:#4a2370;--line:#ff7eb6;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#2b1055;--fg:#fff4e0;--mut:#ffc9a8;--acc:#ffd23f;--ok:#7dffb0;--card:#4a2370;--line:#ff7eb6;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#2b1055;--fg:#fff4e0;--mut:#ffc9a8;--acc:#ffd23f;--ok:#7dffb0;--card:#4a2370;--line:#ff7eb6;color-scheme:dark}
+html,body{height:100%;margin:0}
+body{background:linear-gradient(180deg,#2b1055 0%,#7a2a7e 42%,#ff5e7e 78%,#ffb347 100%);color:var(--fg);font-family:"Press Start 2P","Courier New",monospace;display:flex;flex-direction:column;overflow:hidden;position:relative;touch-action:none;user-select:none}
+#hud{display:flex;justify-content:space-between;padding:10px 16px 0;font-size:10px;color:var(--mut)}
+#hud b{color:var(--fg)}
+#quote{padding:10px 16px 12px;font-size:clamp(11px,3vw,15px);line-height:2.1;text-align:center;min-height:4.4em;margin-top:8px;background:rgba(20,6,40,.5);border-top:3px solid var(--line);border-bottom:3px solid var(--line)}
+#quote span{display:inline-block;margin:0 .22em}
+#quote .d{color:var(--ok)}
+#quote .b{border-bottom:2px solid var(--line);height:.9em;vertical-align:baseline}
+#quote .n{border-bottom-color:var(--acc)}
+#cv{flex:1;min-height:0;width:100%;display:block}
+#ov{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center;background:color-mix(in srgb,var(--bg) 88%,transparent)}
+#ov h1{margin:0;font-size:clamp(16px,5vw,26px);font-weight:400;line-height:1.5;color:var(--acc);text-shadow:3px 3px 0 var(--line)}
+#ov p{margin:0;white-space:pre-line;max-width:30em;color:var(--fg);line-height:2;font-size:10px}
+#ov button{font:inherit;font-size:12px;padding:12px 20px;border:3px solid var(--fg);background:var(--acc);color:#2b1055;border-radius:0;box-shadow:4px 4px 0 var(--line);cursor:pointer}
+#ban{flex-shrink:0;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px 16px;padding:10px 14px;background:rgba(20,6,40,.8);border-top:3px solid var(--line);font-size:8px;line-height:1.9;text-align:center;color:var(--fg)}
+#ban a{color:#2b1055;background:var(--acc);padding:8px 12px;text-decoration:none;border:2px solid var(--fg);box-shadow:3px 3px 0 var(--line);font-size:9px}
+#ov.hide{display:none}
+</style></head><body>
+<div id="hud"><span>Ronda <b id="r">1</b></span><span>Puntos <b id="p">0</b></span><span id="l"></span></div>
+<div id="quote"></div>
+<canvas id="cv"></canvas>
+<div id="ban"><span>▶ Juego homenaje de Café Entropía a «Tomorrow, and Tomorrow, and Tomorrow», de Gabrielle Zevin.</span><a href="https://cafeentropia.substack.com/subscribe" target="_blank" rel="noopener">SUSCRÍBETE</a><span>si te ha parecido interesante</span></div>
+<div id="ov"><h1 id="ot">Blaster Poético</h1><p id="op"></p><button id="ob">Jugar</button></div>
+<script>
+const ALL=[
+["Hope is the thing with feathers that perches in the soul","Emily Dickinson","Dickinson escribió cerca de 1.800 poemas y publicó solo un puñado en vida. Casi toda su obra apareció después de su muerte, en 1886."],
+["I'm Nobody! Who are you? Are you Nobody too?","Emily Dickinson","Es una pequeña burla de la fama: ser «Alguien» es público y aburrido, ser «Nadie» es un secreto compartido. Sus guiones y mayúsculas raras fueron 'corregidos' en las primeras ediciones."],
+["Tell all the truth but tell it slant","Emily Dickinson","El poema defiende que la verdad es tan deslumbrante que hay que acercarse a ella de lado, poco a poco, como a un niño al que se explica el rayo."],
+["Because I could not stop for Death He kindly stopped for me","Emily Dickinson","La Muerte aparece como un caballero cortés que pasa a recogerla en carruaje. Dickinson casi nunca puso títulos: el nombre de sus poemas suele ser su primer verso."],
+["I celebrate myself and sing myself","Walt Whitman","Abre «Song of Myself», dentro de Leaves of Grass (1855), libro que Whitman autopublicó y reescribió durante toda su vida en varias ediciones."],
+["Once upon a midnight dreary while I pondered weak and weary","Edgar Allan Poe","«El cuervo» (1845) le dio fama inmediata. En un ensayo posterior, Poe explicó cómo lo construyó y contó que antes de elegir el cuervo pensó en un loro."],
+["Shall I compare thee to a summer's day","William Shakespeare","Es el Soneto 18, de una serie de 154. Se dirige a un joven y promete que el poema mismo lo hará inmortal."],
+["Caminante no hay camino se hace camino al andar","Antonio Machado","Pertenece a «Proverbios y cantares», en Campos de Castilla (1912). Joan Manuel Serrat lo popularizó al ponerle música en 1969."],
+["Volverán las oscuras golondrinas en tu balcón sus nidos a colgar","Gustavo Adolfo Bécquer","Es la Rima LIII. Las Rimas se publicaron en 1871, tras la muerte de Bécquer: sus amigos las reunieron después de que él mismo perdiera el manuscrito original y lo reconstruyera de memoria."],
+["Verde que te quiero verde","Federico García Lorca","Abre el «Romance sonámbulo», de Romancero gitano (1928), uno de los versos más citados de la poesía en español."],
+["Podrá nublarse el sol eternamente podrá secarse en un instante el mar","Gustavo Adolfo Bécquer","Es la Rima LXXIII: una cadena de imposibles que se encadenan con «podrá…» hasta llegar a lo único que no podrá suceder, que se apague la llama del amor."],
+["¿Qué es poesía dices mientras clavas en mi pupila tu pupila azul","Gustavo Adolfo Bécquer","Es la Rima XXI. La respuesta a la pregunta del título llega en el verso final: la poesía es ella, la persona a la que le habla."],
+["Los suspiros son aire y van al aire","Gustavo Adolfo Bécquer","Es la Rima XXXVIII. Tras comparar los suspiros con el aire y las lágrimas con el agua, el poema cierra con una pregunta sin respuesta: adónde va el amor cuando se olvida."],
+["Yo soy ardiente yo soy morena yo soy el símbolo de la pasión","Gustavo Adolfo Bécquer","Es la Rima XI. En ella desfilan tres figuras femeninas que se ofrecen al poeta; él las rechaza porque busca un ideal que no es ninguna de ellas."],
+["La luna vino a la fragua con su polisón de nardos","Federico García Lorca","Es del «Romance de la luna, luna», en Romancero gitano (1928). Lorca llegó a quejarse de que el éxito del libro lo encasillara como «poeta gitano»."],
+["A las cinco de la tarde Eran las cinco en punto de la tarde","Federico García Lorca","Abre el «Llanto por Ignacio Sánchez Mejías» (1935), elegía por su amigo torero muerto en 1934. La repetición de «a las cinco de la tarde» es uno de los estribillos más famosos de la poesía en español."],
+["Empieza el llanto de la guitarra","Federico García Lorca","Es de «La guitarra», en Poema del cante jondo, escrito en 1921 y publicado en 1931. Lorca organizó con Manuel de Falla el Concurso de Cante Jondo de Granada de 1922."],
+["Cuando yo me muera enterradme con mi guitarra bajo la arena","Federico García Lorca","Es el poema «Memento», palabra latina que significa «recuerda»: funciona como un testamento sentimental, con el mismo tono de cante jondo que el resto del libro."],
+["Hombres necios que acusáis a la mujer sin razón","Sor Juana Inés de la Cruz","Son redondillas del siglo XVII, escritas en la Nueva España, consideradas una de las primeras protestas feministas de la literatura en español. Sor Juana era monja y en gran parte autodidacta."]];
+const $=id=>document.getElementById(id),cv=$('cv'),c=cv.getContext('2d');
+let W=0,H=0,s={state:'menu'},Q=[],last=0,keys={};
+const clean=t=>t.toLowerCase().replace(/[^\p{L}\p{N}']/gu,'');
+const show=t=>t.replace(/[¿?¡!,.;:—…]/g,'');
+function fit(){const d=devicePixelRatio||1,r=cv.getBoundingClientRect();W=r.width;H=r.height;cv.width=W*d;cv.height=H*d;c.setTransform(d,0,0,d,0,0);if(s.ship)s.ship.x=Math.min(s.ship.x,W)}
+addEventListener('resize',fit);
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a}
+function hud(){$('r').textContent=(s.qi+1)+'/'+Q.length;$('p').textContent=s.score;$('l').textContent='♥'.repeat(Math.max(s.lives,0))+'♡'.repeat(Math.max(3-s.lives,0))}
+function paint(){$('quote').innerHTML=s.words.map((w,i)=>i<s.wi?`<span class="d">${w}</span>`:`<span class="b${i==s.wi?' n':''}" style="width:${Math.max(w.length*.9,1.5)}em"></span>`).join('')}
+function load(){s.words=Q[s.qi][0].split(' ');s.wi=0;s.fall=[];s.b=[];s.sp=0;paint();hud()}
+function overlay(t,p,b){$('ot').textContent=t;$('op').textContent=p;$('ob').textContent=b;$('ov').classList.remove('hide')}
+function start(){Q=shuffle(ALL).slice(0,8);s={state:'play',score:0,lives:3,qi:0,combo:0,ship:{x:W/2,tx:W/2},cd:0,fall:[],b:[],fx:[]};load();$('ov').classList.add('hide')}
+function spawn(force){
+  const need=clean(s.words[s.wi]),has=s.fall.some(f=>clean(f.t)===need);
+  let t;
+  if(!has||Math.random()<.45)t=show(s.words[s.wi]);
+  else{const pool=Math.random()<.6?s.words:ALL.flatMap(q=>q[0].split(' '));t=show(pool[Math.random()*pool.length|0])}
+  c.font='12px "Press Start 2P",monospace';const w=c.measureText(t).width+22;
+  s.fall.push({t,w,x:w/2+6+Math.random()*Math.max(W-w-12,1),y:-20,v:50+s.qi*7+Math.random()*25});
+}
+function fire(){
+  if(s.state!=='play'||s.cd>0)return;s.cd=.18;s.b.push({x:s.ship.x,y:H-44});
+}
+function hit(f,i){
+  s.fall.splice(i,1);
+  if(clean(f.t)===clean(s.words[s.wi])){
+    s.score+=10+Math.min(s.combo,10)*2;s.combo++;s.wi++;s.fx.push({x:f.x,y:f.y,t:'+',c:'ok',a:1});paint();hud();
+    if(s.wi>=s.words.length){
+      s.score+=50;hud();s.state='between';const last=s.qi>=Q.length-1;
+      overlay('«'+Q[s.qi][0]+'»','— '+Q[s.qi][1]+'\n\n💡 '+Q[s.qi][2],last?'Ver resultado':'Siguiente verso');
+    }
+  }else{
+    s.lives--;s.combo=0;s.fx.push({x:f.x,y:f.y,t:'✗',c:'acc',a:1});hud();
+    if(s.lives<=0){s.state='over';overlay('Fin del juego','Llegaste a la ronda '+(s.qi+1)+' con '+s.score+' puntos. Era: «'+Q[s.qi][0]+'» — '+Q[s.qi][1],'Reintentar')}
+  }
+}
+$('ob').onclick=()=>{
+  if(s.state==='between'){
+    if(s.qi>=Q.length-1){s.state='over';overlay('¡Completaste el poemario!',s.score+' puntos. Hay '+ALL.length+' versos en total; añade los tuyos al código con su dato curioso.','Jugar otra vez')}
+    else{s.qi++;s.state='play';s.combo=0;load();$('ov').classList.add('hide')}
+  }else start();
+};
+function px(e){const r=cv.getBoundingClientRect();return e.clientX-r.left}
+cv.addEventListener('pointermove',e=>{if(s.ship)s.ship.tx=px(e)});
+cv.addEventListener('pointerdown',e=>{if(s.ship){s.ship.tx=px(e);s.ship.x=px(e);fire()}});
+addEventListener('keydown',e=>{keys[e.key]=1;if(e.key===' '){e.preventDefault();fire()}});
+addEventListener('keyup',e=>keys[e.key]=0);
+function col(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim()}
+function loop(t){
+  const dt=Math.min((t-last)/1000||0,.05);last=t;
+  const fg=col('--fg'),card=col('--card'),line=col('--line'),acc=col('--acc'),ok=col('--ok');
+  c.clearRect(0,0,W,H);
+  {const R=Math.min(W,H)*.26,sy=H*.72,g=c.createLinearGradient(0,sy-R,0,sy+R);g.addColorStop(0,'#ffd23f');g.addColorStop(1,'#ff3d81');c.fillStyle=g;c.globalAlpha=.6;c.beginPath();c.arc(W/2,sy,R,0,7);c.fill();c.globalAlpha=1;for(let i=0;i<5;i++)c.clearRect(W/2-R,sy+R*.08+i*R*.17,R*2,2+i*2)}
+  if(s.state==='play'){
+    if(keys.ArrowLeft||keys.a)s.ship.tx=s.ship.x-420*dt;
+    if(keys.ArrowRight||keys.d)s.ship.tx=s.ship.x+420*dt;
+    s.ship.tx=Math.max(14,Math.min(W-14,s.ship.tx));
+    s.ship.x+=(s.ship.tx-s.ship.x)*Math.min(dt*16,1);
+    s.cd-=dt;s.sp-=dt;
+    if(s.sp<=0){spawn();s.sp=Math.max(.5,.85-s.qi*.03)}
+    s.fall.forEach(f=>f.y+=f.v*dt);
+    s.fall=s.fall.filter(f=>f.y<H+30);
+    s.b.forEach(b=>b.y-=560*dt);
+    s.b=s.b.filter(b=>b.y>-10);
+    for(let bi=s.b.length-1;bi>=0;bi--){
+      const b=s.b[bi];
+      for(let i=s.fall.length-1;i>=0;i--){
+        const f=s.fall[i];
+        if(Math.abs(b.x-f.x)<f.w/2&&Math.abs(b.y-f.y)<14){s.b.splice(bi,1);hit(f,i);break}
+      }
+      if(s.state!=='play')break;
+    }
+  }
+  if(s.fall)s.fall.forEach(f=>{
+    c.fillStyle=card;c.strokeStyle=line;c.lineWidth=1;
+    c.fillRect(f.x-f.w/2,f.y-15,f.w,30);c.lineWidth=3;c.strokeRect(f.x-f.w/2,f.y-15,f.w,30);
+    c.fillStyle=fg;c.font='12px "Press Start 2P",monospace';c.textAlign='center';c.textBaseline='middle';c.fillText(f.t,f.x,f.y+1);
+  });
+  if(s.b)s.b.forEach(b=>{c.fillStyle=acc;c.fillRect(b.x-1.5,b.y-9,3,14)});
+  if(s.ship){
+    c.fillStyle=fg;c.beginPath();c.moveTo(s.ship.x,H-40);c.lineTo(s.ship.x-14,H-14);c.lineTo(s.ship.x+14,H-14);c.closePath();c.fill();
+  }
+  if(s.fx){s.fx.forEach(f=>{f.y-=40*dt;f.a-=dt*1.6;c.globalAlpha=Math.max(f.a,0);c.fillStyle=f.c==='ok'?ok:acc;c.font='bold 22px Georgia';c.fillText(f.t,f.x,f.y)});c.globalAlpha=1;s.fx=s.fx.filter(f=>f.a>0)}
+  requestAnimationFrame(loop);
+}
+$('op').textContent='Los versos caen palabra por palabra. Dispara solo la palabra que sigue en el verso (la línea subrayada en rojo). Un disparo equivocado te cuesta una vida. Ratón/toque para mover y disparar; flechas + espacio en teclado.';
+fit();requestAnimationFrame(loop);
+</script></body></html>
