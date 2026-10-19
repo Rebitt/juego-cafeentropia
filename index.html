@@ -24,12 +24,20 @@ body{background:linear-gradient(180deg,#2b1055 0%,#7a2a7e 42%,#ff5e7e 78%,#ffb34
 #ban{flex-shrink:0;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px 16px;padding:10px 14px;background:rgba(20,6,40,.8);border-top:3px solid var(--line);font-size:8px;line-height:1.9;text-align:center;color:var(--fg)}
 #ban a{color:#2b1055;background:var(--acc);padding:8px 12px;text-decoration:none;border:2px solid var(--fg);box-shadow:3px 3px 0 var(--line);font-size:9px}
 #ov.hide{display:none}
+#hud{align-items:center;gap:8px;flex-wrap:wrap}
+#hb{font:inherit;font-size:9px;padding:6px 8px;border:2px solid var(--fg);background:var(--acc);color:#2b1055;cursor:pointer;box-shadow:2px 2px 0 var(--line)}
+#tip{padding:6px 14px 0;font-size:9px;line-height:1.9;text-align:center;color:var(--acc)}
+#tip:empty{display:none}
+#quote .h{color:var(--mut)}
+#quote .h.n{color:var(--acc);border-bottom:2px solid var(--acc)}
+#ov #sk{background:transparent;color:var(--fg);box-shadow:none;font-size:10px;border-width:2px}
 </style></head><body>
-<div id="hud"><span>Ronda <b id="r">1</b></span><span>Puntos <b id="p">0</b></span><span id="l"></span></div>
+<div id="hud"><span>Ronda <b id="r">1</b></span><span>Puntos <b id="p">0</b></span><span id="l"></span><button id="hb">💡 PISTA</button></div>
 <div id="quote"></div>
+<div id="tip"></div>
 <canvas id="cv"></canvas>
 <div id="ban"><span>▶ Juego homenaje de Café Entropía a «Tomorrow, and Tomorrow, and Tomorrow», de Gabrielle Zevin.</span><a href="https://cafeentropia.substack.com/subscribe" target="_blank" rel="noopener">SUSCRÍBETE</a><span>si te ha parecido interesante</span></div>
-<div id="ov"><h1 id="ot">Blaster Poético</h1><p id="op"></p><button id="ob">Jugar</button></div>
+<div id="ov"><h1 id="ot">Blaster Poético</h1><p id="op"></p><button id="ob">Empezar tutorial</button><button id="sk">Saltar tutorial</button></div>
 <script>
 const ALL=[
 ["Hope is the thing with feathers that perches in the soul","Emily Dickinson","Dickinson escribió cerca de 1.800 poemas y publicó solo un puñado en vida. Casi toda su obra apareció después de su muerte, en 1886."],
@@ -59,10 +67,21 @@ function fit(){const d=devicePixelRatio||1,r=cv.getBoundingClientRect();W=r.widt
 addEventListener('resize',fit);
 function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a}
 function hud(){$('r').textContent=(s.qi+1)+'/'+Q.length;$('p').textContent=s.score;$('l').textContent='♥'.repeat(Math.max(s.lives,0))+'♡'.repeat(Math.max(3-s.lives,0))}
-function paint(){$('quote').innerHTML=s.words.map((w,i)=>i<s.wi?`<span class="d">${w}</span>`:`<span class="b${i==s.wi?' n':''}" style="width:${Math.max(w.length*.9,1.5)}em"></span>`).join('')}
-function load(){s.words=Q[s.qi][0].split(' ');s.wi=0;s.fall=[];s.b=[];s.sp=0;paint();hud()}
-function overlay(t,p,b){$('ot').textContent=t;$('op').textContent=p;$('ob').textContent=b;$('ov').classList.remove('hide')}
-function start(){Q=shuffle(ALL).slice(0,8);s={state:'play',score:0,lives:3,qi:0,combo:0,ship:{x:W/2,tx:W/2},cd:0,fall:[],b:[],fx:[]};load();$('ov').classList.add('hide')}
+function paint(){$('quote').innerHTML=s.words.map((w,i)=>i<s.wi?`<span class="d">${w}</span>`:s.hint?`<span class="h${i==s.wi?' n':''}">${w}</span>`:`<span class="b${i==s.wi?' n':''}" style="width:${Math.max(w.length*.9,1.5)}em"></span>`).join('')}
+function load(){s.words=Q[s.qi][0].split(' ');s.wi=0;s.hint=0;s.fall=[];s.b=[];s.sp=0;paint();hud()}
+function overlay(t,p,b){$('sk').style.display='none';$('ot').textContent=t;$('op').textContent=p;$('ob').textContent=b;$('ov').classList.remove('hide')}
+const TUT=["Forever is composed of Nows","Emily Dickinson","Tutorial"],PT=[],GL=[];
+function glow(f){GL.push({x:f.x,y:f.y,w:f.w,t:f.t,a:1});for(let i=0;i<14;i++){const an=Math.random()*6.28,v=60+Math.random()*120;PT.push({x:f.x,y:f.y,vx:Math.cos(an)*v,vy:Math.sin(an)*v,a:1,r:3+Math.random()*3,c:i%2?'#ffd23f':'#7dffb0'})}}
+function boom(f){
+  c.font='12px "Press Start 2P",monospace';let x=f.x-f.w/2+11;
+  [...f.t].forEach(ch=>{const w=c.measureText(ch).width,cx=x+w/2;x+=w;PT.push({ch,x:cx,y:f.y,vx:(cx-f.x)*3+Math.random()*60-30,vy:-120-Math.random()*140,rot:0,vr:Math.random()*12-6,a:1.2})});
+  for(let i=0;i<18;i++){const an=Math.random()*6.28,v=80+Math.random()*160;PT.push({x:f.x,y:f.y,vx:Math.cos(an)*v,vy:Math.sin(an)*v,a:1,r:2+Math.random()*3,c:i%2?'#ff7eb6':'#fff4e0'})}
+  GL.push({x:f.x,y:f.y,r:8,a:1});
+}
+$('hb').onclick=()=>{if(s.state==='play'){s.hint=!s.hint;paint()}$('hb').blur()};
+$('sk').onclick=()=>start();
+function startTut(){Q=[TUT];s={state:'play',tut:1,score:0,lives:3,qi:0,combo:0,ship:{x:W/2,tx:W/2},cd:0,fall:[],b:[],fx:[]};load();$('ov').classList.add('hide');$('tip').textContent='TUTORIAL · Mueve el ratón o el dedo para apuntar y toca para disparar a la palabra del hueco rojo. Aquí no pierdes vidas. Pulsa 💡 PISTA para ver el verso completo.'}
+function start(){$('tip').textContent='';Q=shuffle(ALL).slice(0,8);s={state:'play',score:0,lives:3,qi:0,combo:0,ship:{x:W/2,tx:W/2},cd:0,fall:[],b:[],fx:[]};load();$('ov').classList.add('hide')}
 function spawn(force){
   const need=clean(s.words[s.wi]),has=s.fall.some(f=>clean(f.t)===need);
   let t;
@@ -77,17 +96,17 @@ function fire(){
 function hit(f,i){
   s.fall.splice(i,1);
   if(clean(f.t)===clean(s.words[s.wi])){
-    s.score+=10+Math.min(s.combo,10)*2;s.combo++;s.wi++;s.fx.push({x:f.x,y:f.y,t:'+',c:'ok',a:1});paint();hud();
+    s.score+=10+Math.min(s.combo,10)*2;s.combo++;s.wi++;glow(f);if(s.tut&&s.wi<s.words.length)$('tip').textContent='¡Bien! Sigue con la siguiente palabra del hueco rojo.';paint();hud();
     if(s.wi>=s.words.length){
-      s.score+=50;hud();s.state='between';const last=s.qi>=Q.length-1;
+      s.score+=50;hud();s.state='between';const last=s.qi>=Q.length-1;if(s.tut){overlay('¡Tutorial completado!','Ya sabes jugar. Ahora vienen 8 versos de verdad: aquí los fallos cuestan vida. Si no conoces un verso, usa 💡 PISTA.','Empezar el juego');return}
       overlay('«'+Q[s.qi][0]+'»','— '+Q[s.qi][1]+'\n\n💡 '+Q[s.qi][2],last?'Ver resultado':'Siguiente verso');
     }
   }else{
-    s.lives--;s.combo=0;s.fx.push({x:f.x,y:f.y,t:'✗',c:'acc',a:1});hud();
+    if(s.tut)$('tip').textContent='Esa no era. En el juego te costaría una vida; aquí puedes fallar.';else s.lives--;s.combo=0;boom(f);hud();
     if(s.lives<=0){s.state='over';overlay('Fin del juego','Llegaste a la ronda '+(s.qi+1)+' con '+s.score+' puntos. Era: «'+Q[s.qi][0]+'» — '+Q[s.qi][1],'Reintentar')}
   }
 }
-$('ob').onclick=()=>{
+$('ob').onclick=()=>{if(s.state==='menu'){startTut();return}if(s.tut&&s.state==='between'){start();return}
   if(s.state==='between'){
     if(s.qi>=Q.length-1){s.state='over';overlay('¡Completaste el poemario!',s.score+' puntos. Hay '+ALL.length+' versos en total; añade los tuyos al código con su dato curioso.','Jugar otra vez')}
     else{s.qi++;s.state='play';s.combo=0;load();$('ov').classList.add('hide')}
@@ -134,7 +153,25 @@ function loop(t){
     c.fillStyle=fg;c.beginPath();c.moveTo(s.ship.x,H-40);c.lineTo(s.ship.x-14,H-14);c.lineTo(s.ship.x+14,H-14);c.closePath();c.fill();
   }
   if(s.fx){s.fx.forEach(f=>{f.y-=40*dt;f.a-=dt*1.6;c.globalAlpha=Math.max(f.a,0);c.fillStyle=f.c==='ok'?ok:acc;c.font='bold 22px Georgia';c.fillText(f.t,f.x,f.y)});c.globalAlpha=1;s.fx=s.fx.filter(f=>f.a>0)}
-  requestAnimationFrame(loop);
+  fx2(dt);requestAnimationFrame(loop);
+}
+function fx2(dt){
+  c.textAlign='center';c.textBaseline='middle';
+  GL.forEach(g=>{
+    g.a-=dt*2;if(g.a<=0)return;c.globalAlpha=g.a;
+    if(g.r!==undefined){g.r+=dt*260;c.strokeStyle='#ff7eb6';c.lineWidth=3;c.beginPath();c.arc(g.x,g.y,g.r,0,7);c.stroke();return}
+    const k=1+(1-g.a)*.35,w=g.w*k;c.shadowColor='#ffd23f';c.shadowBlur=24;c.fillStyle='#ffd23f';c.fillRect(g.x-w/2,g.y-15*k,w,30*k);c.shadowBlur=0;c.fillStyle='#2b1055';c.font=Math.round(12*k)+'px "Press Start 2P",monospace';c.fillText(g.t,g.x,g.y+1);
+  });
+  c.globalAlpha=1;
+  for(let i=0;i<GL.length;i++)if(GL[i].a<=0)GL.splice(i--,1);
+  PT.forEach(p=>{
+    p.a-=dt*(p.ch?1.1:1.8);p.x+=p.vx*dt;p.vy+=(p.ch?260:0)*dt;p.y+=p.vy*dt;if(p.ch)p.rot+=p.vr*dt;
+    if(p.a<=0)return;c.globalAlpha=Math.min(p.a,1);
+    if(p.ch){c.save();c.translate(p.x,p.y);c.rotate(p.rot);c.fillStyle='#ff7eb6';c.font='12px "Press Start 2P",monospace';c.fillText(p.ch,0,0);c.restore()}
+    else{c.fillStyle=p.c;c.fillRect(p.x-p.r/2,p.y-p.r/2,p.r,p.r)}
+  });
+  c.globalAlpha=1;
+  for(let i=0;i<PT.length;i++)if(PT[i].a<=0)PT.splice(i--,1);
 }
 $('op').textContent='Los versos caen palabra por palabra. Dispara solo la palabra que sigue en el verso (la línea subrayada en rojo). Un disparo equivocado te cuesta una vida. Ratón/toque para mover y disparar; flechas + espacio en teclado.';
 fit();requestAnimationFrame(loop);
